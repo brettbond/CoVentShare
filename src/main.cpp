@@ -22,7 +22,7 @@
 #define WROVER_BL                       1
 #define SERIAL2_RXPIN                   16
 #define SERIAL2_TXPIN                   17
-#define PRESSURE_ANALOG_PIN                      32
+#define PRESSURE_ANALOG_PIN             32
 
 WROVER_KIT_LCD tft;
 int16_t screenWidth = 0, screenHeight = 0;
@@ -30,15 +30,19 @@ int16_t screenWidth = 0, screenHeight = 0;
 
 void initDisplay() {
   tft.begin();
+
+  // Landscape
   tft.setRotation(1);
 
   // turn the backlight on
   digitalWrite(WROVER_BL, HIGH);
 
+  // get the screen total width for later use
   screenWidth = tft.width();
   screenHeight = tft.height();
 }
 
+// Use a large font to display a headine at the top of the screen
 void displayHeadlineText(String headline) {
   tft.setCursor(25, 50);
   tft.setFont(&FreeSansBold18pt7b);
@@ -46,6 +50,7 @@ void displayHeadlineText(String headline) {
   tft.println(headline);
 }
 
+// Draw a pressure value in the center of the screen followed by a cmH2O units label
 void displayCenteredText(String message, uint32_t color, float fontSize) {
   tft.setFont(&FreeSansBoldOblique24pt7b);
   tft.setTextSize(2);
@@ -55,6 +60,7 @@ void displayCenteredText(String message, uint32_t color, float fontSize) {
   tft.println(message);
   tft.setFont(NULL);
   tft.setCursor(25, 175);
+  // units labels
   tft.println("cmH2O");
 }
 
@@ -64,8 +70,10 @@ void flashMessage(String message) {
   if(message == lastMessage) {
     return;
   }
+  // not double-buffered, fill in the last message with background color
   displayCenteredText (lastMessage, ILI9341_BLUE, 1.1);
   lastMessage = message;
+  // then draw the new mesage
   displayCenteredText (message, ILI9341_WHITE, 1.1);
 }
 
@@ -81,5 +89,7 @@ void setup() {
 void loop() {
   uint32_t value = map(analogRead(PRESSURE_ANALOG_PIN), 0, 4096, 40, 0);
   flashMessage(String(value));
+
+  // update 2x per second
   usleep(500000);
 }
