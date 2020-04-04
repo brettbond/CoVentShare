@@ -13,20 +13,20 @@
 // #define WROVER_MISO             19
 // #define WROVER_BL               1
 
-
 #include "WROVER_KIT_LCD.h"
 
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBoldOblique24pt7b.h>
+#include "breather.h"
 
 #define WROVER_BL                       1
 #define SERIAL2_RXPIN                   16
 #define SERIAL2_TXPIN                   17
 #define PRESSURE_ANALOG_PIN             32
+#define LEVEL_SHIFTER_OUTPUT_ENABLE_PIN 25
 
 WROVER_KIT_LCD tft;
 int16_t screenWidth = 0, screenHeight = 0;
-
 
 void initDisplay() {
   tft.begin();
@@ -77,19 +77,35 @@ void flashMessage(String message) {
   displayCenteredText (message, ILI9341_WHITE, 1.1);
 }
 
+Breather *g_breather = NULL;
+Breather *getBreather() {
+  if(g_breather == NULL) {
+    Serial.println("Creating Breather.");
+    g_breather = new Breather();
+  }
+  return g_breather;
+}
+
 void setup() {
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, SERIAL2_RXPIN, SERIAL2_TXPIN);
   pinMode(PRESSURE_ANALOG_PIN, INPUT);
+  pinMode(LEVEL_SHIFTER_OUTPUT_ENABLE_PIN, OUTPUT);
+  digitalWrite(LEVEL_SHIFTER_OUTPUT_ENABLE_PIN, HIGH);
+
   initDisplay();
   tft.fillScreen(ILI9341_BLUE);
   displayHeadlineText("Pressure: ");
+  // g_breather.start();
 }
 
 void loop() {
   uint32_t value = map(analogRead(PRESSURE_ANALOG_PIN), 0, 4096, 40, 0);
   flashMessage(String(value));
 
-  // update 2x per second
-  usleep(500000);
+  getBreather()->start();
+
+  //update 2x per second
+ //usleep(500000);
+ sleep(1);
 }
