@@ -22,6 +22,12 @@ void FirePixelController::ignite() {
   uint8_t unlockBytes[5] = {3, m_firePixel->getAddress(), 0, 0, 0};
   unlockBytes[4] = calculate_checksum(unlockBytes, 4);
   m_firePixel->writeBytes(unlockBytes, 5);
+  // unlock AfterBurner
+  uint8_t afterBurnerUnlockBytes[5] = {128, m_firePixel->getAddress(), 0, 0, 0};
+  afterBurnerUnlockBytes[4] = calculate_checksum(afterBurnerUnlockBytes, 4);
+  m_firePixel->writeBytes(afterBurnerUnlockBytes, 5);
+  delay(100);
+
 }
 
 void FirePixelController::off() {
@@ -37,10 +43,13 @@ void FirePixelController::setFlameValue(uint8_t value) {
   m_firePixel->writeBytes(flameValueBytes, 5);
 }
 
-// void FirePixelController::setAfterBurnerValue(uint8_t value) {
-//   uint8_t afterBurnerValueBytes[5] = {128, m_firePixel->getAddress(), value, 0, 0};
-//
-// }
+void FirePixelController::setAfterBurnerValue(uint8_t value) {
+  // set AfterBurner valve value
+  uint8_t afterBurnerValueBytes[5] = {128, m_firePixel->getAddress(), value, 1, 0};
+  afterBurnerValueBytes[4] = calculate_checksum(afterBurnerValueBytes, 4);
+  m_firePixel->writeBytes(afterBurnerValueBytes, 5);
+  delay(100);
+}
 
 
 unsigned char FirePixelController::rot(unsigned char value) {

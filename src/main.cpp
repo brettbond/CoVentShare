@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include "SPI.h"
 #include "Adafruit_GFX.h"
+#include "breather.h"
 
 // NOTE: WROVER_KIT_LCD.cpp modified for LiveSpark torch board pin mapping
 // Here are the pins we're using
@@ -17,7 +18,6 @@
 
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBoldOblique24pt7b.h>
-#include "breather.h"
 
 #define WROVER_BL                       1
 #define SERIAL2_RXPIN                   16
@@ -61,7 +61,7 @@ void displayCenteredText(String message, uint32_t color, float fontSize) {
   tft.setFont(NULL);
   tft.setCursor(25, 175);
   // units labels
-  tft.println("cmH2O");
+  tft.println("lpm");
 }
 
 void flashMessage(String message) {
@@ -81,7 +81,7 @@ Breather *g_breather = NULL;
 Breather *getBreather() {
   if(g_breather == NULL) {
     Serial.println("Creating Breather.");
-    g_breather = new Breather();
+    g_breather = new Breather(10);
   }
   return g_breather;
 }
@@ -95,17 +95,18 @@ void setup() {
 
   initDisplay();
   tft.fillScreen(ILI9341_BLUE);
-  displayHeadlineText("Pressure: ");
-  // g_breather.start();
+  displayHeadlineText("Flow Rate: ");
 }
 
+boolean breathing = false;
 void loop() {
-  uint32_t value = map(analogRead(PRESSURE_ANALOG_PIN), 0, 4096, 40, 0);
-  flashMessage(String(value));
+  // uint32_t reading = map(analogRead(PRESSURE_ANALOG_PIN), 0, 4000, 40, 0);
+  if(!breathing) {
+    getBreather()->start();
+    breathing = true;
+  }
+  uint8_t flowRate = getBreather()->breathe();
+  flashMessage(String(flowRate));
 
-  getBreather()->start();
-
-  //update 2x per second
- //usleep(500000);
- sleep(1);
+ usleep(100000);
 }

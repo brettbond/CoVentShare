@@ -11,7 +11,7 @@ public:
   void ignite();
   void off();
   void setFlameValue(uint8_t value);
-  // void setAfterBurnerValue(uint8_t value);
+  void setAfterBurnerValue(uint8_t value);
 
 protected:
   unsigned char rot(unsigned char value);
