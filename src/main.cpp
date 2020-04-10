@@ -3,6 +3,7 @@
 #include "SPI.h"
 #include "Adafruit_GFX.h"
 #include "breather.h"
+#include "devices/PressureSensorDPS310.h"
 
 // NOTE: WROVER_KIT_LCD.cpp modified for LiveSpark torch board pin mapping
 // Here are the pins we're using
@@ -25,8 +26,13 @@
 #define PRESSURE_ANALOG_PIN             32
 #define LEVEL_SHIFTER_OUTPUT_ENABLE_PIN 25
 
+#define PRESSURE_DPS310_SDA_PIN         13
+#define PRESSURE_DPS310_SCL_PIN         14
+
+
 WROVER_KIT_LCD tft;
 int16_t screenWidth = 0, screenHeight = 0;
+PressureSensorDPS310 pressureSensor(PRESSURE_DPS310_SDA_PIN, PRESSURE_DPS310_SCL_PIN);
 
 void initDisplay() {
   tft.begin();
@@ -41,6 +47,8 @@ void initDisplay() {
   screenWidth = tft.width();
   screenHeight = tft.height();
 }
+
+
 
 // Use a large font to display a headine at the top of the screen
 void displayHeadlineText(String headline) {
@@ -61,7 +69,7 @@ void displayCenteredText(String message, uint32_t color, float fontSize) {
   tft.setFont(NULL);
   tft.setCursor(25, 175);
   // units labels
-  tft.println("lpm");
+  tft.println("meters");
 }
 
 void flashMessage(String message) {
@@ -93,20 +101,24 @@ void setup() {
   pinMode(LEVEL_SHIFTER_OUTPUT_ENABLE_PIN, OUTPUT);
   digitalWrite(LEVEL_SHIFTER_OUTPUT_ENABLE_PIN, HIGH);
 
+  pressureSensor.begin();
   initDisplay();
   tft.fillScreen(ILI9341_BLUE);
-  displayHeadlineText("Flow Rate: ");
+  displayHeadlineText("Altitude: ");
 }
 
 boolean breathing = false;
 void loop() {
-  // uint32_t reading = map(analogRead(PRESSURE_ANALOG_PIN), 0, 4000, 40, 0);
+  uint32_t reading = map(analogRead(PRESSURE_ANALOG_PIN), 0, 4000, 40, 0);
   if(!breathing) {
     getBreather()->start();
     breathing = true;
   }
   uint8_t flowRate = getBreather()->breathe();
-  flashMessage(String(flowRate));
 
- usleep(100000);
+  if(pressureSensor.isAvailable()) {
+    flashMessage(String(pressureSensor.getAltitudeMeters()));
+
+  }
+  usleep(1000000);
 }
